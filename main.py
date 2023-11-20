@@ -6,6 +6,7 @@ KNIGHT_SPEED = 5
 PLAYER_HEALTH = 5
 SWORD = emoji("🔪")
 MONSTER_HEALTH = 1
+ATTACKING = False
 @dataclass
 class World:
     knight: DesignerObject
@@ -17,13 +18,15 @@ class World:
     sword: DesignerObject
     weapons: list[DesignerObject]
     player_health: int
+    counter: DesignerObject
+    attacking: bool
     # weapons: list[DesignerObject]
     # wave_number: int
 
 
 def create_world() -> World:
-    return World(create_knight(), KNIGHT_SPEED, [], MONSTER_HEALTH, SWORD, [],
-                 text("black", "Health: " + str(PLAYER_HEALTH),  20, 40, 10))
+    return World(create_knight(), KNIGHT_SPEED, [], MONSTER_HEALTH, SWORD, [], PLAYER_HEALTH,
+                 text("black", "Health: " + str(PLAYER_HEALTH),  50, get_width() // 2, get_height() // 2), ATTACKING)
 
 
 def create_knight() -> DesignerObject:
@@ -96,11 +99,17 @@ def move_below(bottom: DesignerObject, top: DesignerObject):
     bottom.x = top.x
 
 def attack_weapon(world: World, key: str):
-    """ Moves the sword downwards when the player hits space"""
+    """ Moves the sword downwards when the player hits space,
+     and back up after hitting space again"""
     if key == 'space':
-        new_weapon = create_weapon()
-        move_below(new_weapon, world.knight)
-        world.weapons.append(new_weapon)
+        if world.sword.y == world.knight.y:
+            new_weapon = create_weapon()
+            move_below(new_weapon, world.knight)
+            world.weapons.append(new_weapon)
+            world.attacking = True
+        elif not world.sword.y == world.knight.y:
+            world.sword.y = world.knight.y
+            world.attacking = False
 
 def create_monster() -> DesignerObject:
     """ Create a monster randomly on the screen """
@@ -129,13 +138,36 @@ def filter_from(old_list: list[DesignerObject], elements_to_not_keep: list[Desig
     return new_values
 
 def damage_monster(world: World):
+    """Damages monsters when weapon collides with them. Removes dead monsters"""
     killed_monsters = []
     for monster in world.monster:
-        if colliding(world.sword, monster):
-            world.monster_health -= 1
-            if world.monster_health == 0:
+        if world.attacking:
+            if colliding(world.sword, monster):
                 killed_monsters.append(monster)
     world.monster = filter_from(world.monster, killed_monsters)
+
+def update_health(world):
+    """Updates the health displayed"""
+    world.counter.text = "Health: " + str(world.player_health)
+
+def damage_player(world: World):
+    """Damages the player when the run into a monster,
+    This kills the monster too"""
+    dead_monster = []
+    for monster in world.monster:
+        if colliding(world.knight, monster):
+            world.player_health -= 1
+            dead_monster.append(monster)
+            world.monster = filter_from(world.monster, dead_monster)
+
+def player_has_no_health(world: World) -> bool:
+    """checks players health and returns a bool of if the player has health or not"""
+    no_health = False
+    if world.player_health == 0:
+        no_health = True
+    return no_health
+def game_over(world: World):
+    world.counter.text = "YOU DIED! GAME OVER!"
 
 when('starting', create_world)
 when("typing", move_knight_horizontal)
@@ -144,5 +176,8 @@ when('typing', attack_weapon)
 when("updating", damage_monster)
 when("updating", boundaries)
 when("updating", make_monster)
+when("updating", update_health)
+when("updating", damage_player)
 when("typing", direct_knight)
+when(player_has_no_health, game_over, pause)
 start()
