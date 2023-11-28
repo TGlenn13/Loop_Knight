@@ -2,13 +2,18 @@ from designer import *
 from dataclasses import dataclass
 from random import randint
 
-KNIGHT_SPEED = 5
+background_image("images/grass.jpg")
+
+KNIGHT_SPEED = 15
 PLAYER_HEALTH = 5
 SWORD = emoji("🔪")
 MONSTER_HEALTH = 1
 ATTACKING = False
+SKULL = emoji("💀")
 @dataclass
 class World:
+    sword_timer: int
+    score: int
     knight: DesignerObject
     knight_speed: int
     monster: list[DesignerObject]
@@ -20,14 +25,15 @@ class World:
     player_health: int
     counter: DesignerObject
     attacking: bool
+    #skull: DesignerObject
     # weapons: list[DesignerObject]
     # wave_number: int
 
 
 def create_world() -> World:
-    return World(create_knight(), KNIGHT_SPEED, [], MONSTER_HEALTH, SWORD, [], PLAYER_HEALTH,
-                 text("black", "Health: " + str(PLAYER_HEALTH),  50, get_width() // 2, get_height() // 2), ATTACKING)
-
+    return World(0, 0, create_knight(), KNIGHT_SPEED, [], MONSTER_HEALTH, SWORD, [], PLAYER_HEALTH,
+                 text("black", "Health: " + str(PLAYER_HEALTH),  40, get_width() // 2, 30), ATTACKING)
+when('starting', create_world)
 
 def create_knight() -> DesignerObject:
     """ Create the knight """
@@ -45,7 +51,7 @@ def move_knight_horizontal(world: World, key: str):
     elif key == "a":
         world.knight.x -= world.knight_speed
         world.sword.x -= world.knight_speed
-
+when("typing", move_knight_horizontal)
 
 def move_knight_vertical(world: World, key: str):
     """ Move the knight and sword vertically"""
@@ -55,7 +61,7 @@ def move_knight_vertical(world: World, key: str):
     elif key == "s":
         world.knight.y += world.knight_speed
         world.sword.y += world.knight_speed
-
+when("typing", move_knight_vertical)
 
 def boundaries(world: World):
     """ Handle the knight running into the wall"""
@@ -67,7 +73,7 @@ def boundaries(world: World):
         world.knight.y = get_height() - 1
     elif world.knight.y < 0:
         world.knight.y = 1
-
+when("updating", boundaries)
 
 def head_left(world: World):
     """ Make the knight move left """
@@ -87,6 +93,7 @@ def direct_knight(world: World, key: str):
         head_left(world)
     elif key == "d":
         head_right(world)
+when("typing", direct_knight)
 
 def create_weapon() -> DesignerObject:
     """ Create a weapon. For now swords only"""
@@ -107,9 +114,19 @@ def attack_weapon(world: World, key: str):
             move_below(new_weapon, world.knight)
             world.weapons.append(new_weapon)
             world.attacking = True
-        elif not world.sword.y == world.knight.y:
-            world.sword.y = world.knight.y
-            world.attacking = False
+            world.sword_timer = 15
+when('typing', attack_weapon)
+
+def update_timer(world: World):
+    """"Updates the timer after the,
+    player has attacked. When the timer,
+    reaches 0 the sword resets"""
+    if world.sword_timer > 0:
+        world.sword_timer -= 1
+    else:
+        world.attacking = False
+        world.sword.y = world.knight.y
+when("updating", update_timer)
 
 def create_monster() -> DesignerObject:
     """ Create a monster randomly on the screen """
@@ -128,7 +145,30 @@ def make_monster(world: World):
     random_chance = randint(1, 80) == 40
     if not_too_many_monsters and random_chance:
         world.monster.append(create_monster())
+when("updating", make_monster)
+
+def monster_movement(world: World):
+    """Moves the monster upwards and horizontally slowly.
+    If the monster reaches the top they spawn back in
+    at the bottom"""
+    for monster in world.monster:
+        monster.x += randint(-5,5)
+        monster.y -= 2
+        if monster.y <= 0:
+            monster.y = get_height()
+when("updating", monster_movement)
+
+def monster_boundaries(world: World):
+    """keeps the monster within the screen"""
+    for monster in world.monster:
+        if monster.x > get_width():
+            monster.x = get_width() - 3
+        if monster.x <= 0:
+            monster.x = 3
+when("updating", monster_boundaries)
+
 def filter_from(old_list: list[DesignerObject], elements_to_not_keep: list[DesignerObject]) -> list[DesignerObject]:
+    """Filters unwanted data from a list"""
     new_values = []
     for item in old_list:
         if item in elements_to_not_keep:
@@ -144,14 +184,23 @@ def damage_monster(world: World):
         if world.attacking:
             if colliding(world.sword, monster):
                 killed_monsters.append(monster)
+                world.score += 1
     world.monster = filter_from(world.monster, killed_monsters)
+when("updating", damage_monster)
 
+'''
+def flash_skull(world: World):
+    timer = 10
+    for time in timer:
+        timer -= 1
+'''
 def update_health(world):
     """Updates the health displayed"""
     world.counter.text = "Health: " + str(world.player_health)
+when("updating", update_health)
 
 def damage_player(world: World):
-    """Damages the player when the run into a monster,
+    """Damages the player when they run into a monster,
     This kills the monster too"""
     dead_monster = []
     for monster in world.monster:
@@ -159,25 +208,17 @@ def damage_player(world: World):
             world.player_health -= 1
             dead_monster.append(monster)
             world.monster = filter_from(world.monster, dead_monster)
+when("updating", damage_player)
 
 def player_has_no_health(world: World) -> bool:
     """checks players health and returns a bool of if the player has health or not"""
     no_health = False
-    if world.player_health == 0:
+    if world.player_health <= 0:
         no_health = True
     return no_health
-def game_over(world: World):
-    world.counter.text = "YOU DIED! GAME OVER!"
 
-when('starting', create_world)
-when("typing", move_knight_horizontal)
-when("typing", move_knight_vertical)
-when('typing', attack_weapon)
-when("updating", damage_monster)
-when("updating", boundaries)
-when("updating", make_monster)
-when("updating", update_health)
-when("updating", damage_player)
-when("typing", direct_knight)
+def game_over(world: World):
+    world.counter.text = "GAME OVER! YOU HAVE SLAIN " + str(world.score) + " MONSTERS!"
 when(player_has_no_health, game_over, pause)
+
 start()
