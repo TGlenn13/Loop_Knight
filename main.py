@@ -131,8 +131,8 @@ when("updating", update_timer)
 def create_monster() -> DesignerObject:
     """ Create a monster randomly on the screen """
     monster = emoji('🧟')
-    monster.scale_x = 1
-    monster.scale_y = 1
+    monster.scale_x = 3
+    monster.scale_y = 3
     monster.anchor = 'midbottom'
     monster.x = randint(0, get_width())
     monster.y = get_height()
@@ -141,9 +141,9 @@ def create_monster() -> DesignerObject:
 
 def make_monster(world: World):
     """ Create a new monster at random times, if the monster cap has not been met """
-    not_too_many_monsters = len(world.monster) < 15
-    random_chance = randint(1, 80) == 40
-    if not_too_many_monsters and random_chance:
+    #not_too_many_monsters = len(world.monster) < 15
+    random_chance = randint(1, 30) == 15
+    if random_chance:
         world.monster.append(create_monster())
 when("updating", make_monster)
 
@@ -152,7 +152,7 @@ def monster_movement(world: World):
     If the monster reaches the top they spawn back in
     at the bottom"""
     for monster in world.monster:
-        monster.x += randint(-5,5)
+        monster.x += randint(-20,20)
         monster.y -= 2
         if monster.y <= 0:
             monster.y = get_height()
@@ -219,6 +219,8 @@ def player_has_no_health(world: World) -> bool:
 
 def game_over(world: World):
     world.counter.text = "GAME OVER! YOU HAVE SLAIN " + str(world.score) + " MONSTERS!"
+    for monster in world.monster:
+        destroy(monster)
 when(player_has_no_health, game_over, pause)
 
 start()
