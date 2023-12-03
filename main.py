@@ -230,7 +230,7 @@ when("updating", kill_monster)
 
 def update_health(world):
     """Updates the health displayed"""
-   world.counter.text = "Health: " + str(world.player_health)
+    world.counter.text = "Health: " + str(world.player_health)
 when("updating", update_health)
 
 def monster_damages_player(world: World):
