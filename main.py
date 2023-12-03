@@ -228,8 +228,8 @@ def kill_monster(world: World):
     world.monster = filter_from(world.monster, killed_monsters)
 when("updating", kill_monster)
 
-def update_health(world):
-    """Updates the health displayed"""
+def update_health(world: World):
+   """Updates the health displayed"""
    world.counter.text = "Health: " + str(world.player_health)
 when("updating", update_health)
 
