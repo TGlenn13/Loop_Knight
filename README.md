@@ -12,7 +12,7 @@ Phase 2: https://youtu.be/dADkjYrnKvU
 
 # About
 
-In the game Loop Knight, you are a knight stuck within an endless loop of fighting monsters. These monsters spawn infinitely which causes the player to eventually be overwhelmed. The theme of the game is scale which is demonstrated with the number of monsters scaling as the player continues to fight. 
+In the game Loop Knight, you are a knight stuck within an endless loop of fighting monsters. These monsters spawn infinitely which causes the player to eventually be overwhelmed. The theme of the game is scale which is demonstrated with the number of monsters scaling as the player continues to fight. There are two monster types that you will encounter; the basic monster that looks like a zombie and the boss monster that looks like a demon. The monsters themselves have jagged, unpredictable movement which keeps the player on their toes. If a monster runs into the player, the player loses 1 health point. This also kills the monster due to their self destructive nature. The player is equiped with a sword that can kill the monsters in one hit. If the player loses all health, the game ends and shows how many monsters you killed. How many will you slay?
 
 Phase 1
 - [X] The Knight exists in the world as a placeholder emoji
