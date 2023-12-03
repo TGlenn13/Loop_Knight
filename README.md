@@ -17,9 +17,13 @@ In the game Loop Knight, you are a knight stuck within an endless loop of fighti
 Each time you want to move you must tap that key
 
 Move up: W
+
 Move left: A
+
 Move down: S
+
 Move right: D
+
 Swing sword: space
 
 # Authors
